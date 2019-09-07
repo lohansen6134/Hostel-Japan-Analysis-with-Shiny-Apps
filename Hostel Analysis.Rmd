@@ -1,0 +1,148 @@
+---
+title: "Your Document Title"
+author: "Document Author"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+Analisi Plot :
+1. Jumlah Hostel di setiap kota
+2. perbandingan harga startfrom hotel 
+3. pembagian rating band hotel di setiap kota
+4. perbandingan "valueformoney" dengan "summary score"
+5. apakah penilaian variabel "fasilitas" ada hubungan dengan kualitas "staff"
+6. apakah "distance" berhubungan dengan nilai "location"
+
+
+Read Data :
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+hostel <- read_csv("Hostel_data.csv")
+```
+
+Cleaning :
+```{r}
+hostel$rating.band <- as.factor(hostel$rating.band)
+hostel$City <- as.factor(hostel$City)
+```
+
+
+Analisis 1 :
+```{r}
+h.count <- hostel %>% 
+  group_by(City) %>% 
+  summarise(city_hostel_count = n()) %>% 
+  ungroup()
+
+ggplot(h.count, aes(x = City, y = city_hostel_count))+
+  geom_col(aes(fill = city_hostel_count)) +
+  labs(x = NULL,
+       y = NULL,
+       title = "Hostel in Japan")
+```
+
+
+Analisis 2:
+```{r}
+h.price <- hostel %>% 
+  filter(City == "Tokyo") %>% 
+  group_by(price.from) %>% 
+  summarise(hostel.price = n()) %>% 
+  ungroup() %>% 
+  gather(key, value, -price.from) %>% 
+  mutate(text = paste("price", ":",price.from,",", "total", ":", value))
+
+h.price.pl <- ggplot(h.price, aes(x = value, y = price.from, text = text))+
+  geom_jitter(aes(col = price.from))+
+  theme(legend.position = "none")+
+  theme_bw()+
+  labs(x = NULL,
+       y = NULL,
+       title = "Hostel Starting Price each City")
+
+ggplotly(h.price.pl, tooltip = "text")
+```
+
+
+Analisis 3:
+```{r}
+h.rating <- hostel %>% 
+  filter(City == "Hiroshima") %>% 
+  group_by(rating.band) %>%
+  summarise(rating = n()) %>% 
+  ungroup() %>% 
+  gather(key, value, -rating.band) %>% 
+  mutate(text = paste(rating.band, ":", value))
+
+h.rating.pl <- ggplot(h.rating, aes(x = rating.band, y = value, text = text))+
+  geom_point(aes(size = value, col = value))+
+  theme(legend.position = "none")+
+  theme_bw()+
+  labs(x = NULL,
+       y = NULL,
+       title = "Hostel Rating each City")
+
+ggplotly(h.rating.pl, tooltip = "text")
+```
+
+
+```{r}
+h.score <- hostel %>% 
+  select(City, rating.band, summary.score, valueformoney) %>% 
+  filter(rating.band == "Fabulous") %>% 
+  group_by(City) %>% 
+  summarise(summary.score = round(mean(summary.score),2),
+            value.for.money = round(mean(valueformoney),2)) %>% 
+  ungroup() %>% 
+  gather(key, value, - City) %>% 
+  mutate(text = paste(key, ":", value))
+
+h.score.pl <- ggplot(h.score, aes(x = City, y = value, text=text))+
+  geom_col(aes(fill = key), position = "dodge") + coord_flip()+
+  theme(legend.position = "bottom")+ 
+  theme_bw()+
+  labs(x = NULL,
+       y = NULL,
+       title = "Summary Score vs Value For Money")
+
+ggplotly(h.score.pl, tooltip = "text")
+```
+
+
+Analisis Map
+```{r}
+library(leaflet)
+```
+
+```{r}
+h.rb <- hostel %>% 
+  filter(rating.band == "Rating")
+
+leaflet(data = h.rb) %>% 
+  addTiles() %>% 
+  addCircles(lng = ~lon,
+             lat = ~lat,
+             weight = 5,
+             radius = ~sqrt(summary.score) * 30,
+             popup = ~City,
+             fillColor = "transparent",
+             highlightOptions = highlightOptions(weight = 10,
+                                                 color = "brown",
+                                                 fillColor = "green"),
+             label = ~hostel.name)
+```
+
+
+
+
+
+
+
+

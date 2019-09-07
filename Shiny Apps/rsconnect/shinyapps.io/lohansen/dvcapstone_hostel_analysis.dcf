@@ -1,0 +1,12 @@
+name: dvcapstone_hostel_analysis
+title: dvcapstone_hostel_analysis
+username:
+account: lohansen
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1060569
+bundleId: 2280232
+url: https://lohansen.shinyapps.io/dvcapstone_hostel_analysis/
+when: 1564588266.57072
+asMultiple: FALSE
+asStatic: FALSE
